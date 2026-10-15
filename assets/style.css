@@ -236,19 +236,19 @@ button, input, select { font: inherit; color: inherit; }
 /* mapa OSM no modo escuro: inverte só os blocos do mapa de fundo */
 .leaflet-tile.tiles-dark, .tiles-dark .leaflet-tile { filter: invert(1) hue-rotate(180deg) brightness(.85) contrast(.9) saturate(.6); }
 
-/* ---------- abertura (7 s) ---------- */
+/* ---------- abertura (10 s) ---------- */
 .abertura { position: fixed; inset: 0; z-index: 5000; display: grid; place-items: center;
   padding: max(24px, env(safe-area-inset-top, 0px)) max(24px, env(safe-area-inset-right, 0px)) max(24px, env(safe-area-inset-bottom, 0px)) max(24px, env(safe-area-inset-left, 0px));
   background: radial-gradient(120% 90% at 50% 0%, #ffffff 0%, #f6faf7 55%, #e9f3ee 100%); color: #14211a;
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  animation: introOut .5s ease-in 6.5s both; }
+  animation: introOut .5s ease-in 9.5s both; }
 .abertura.out { animation: introOut .35s ease-in 0s both; }
 .abertura-stage { width: min(1180px, 100%); display: flex; flex-direction: column; align-items: center; text-align: center; gap: clamp(14px, 2.4vh, 28px); }
 .abertura-asl { width: clamp(220px, 36vw, 760px); height: auto; animation: introUp .9s cubic-bezier(.2,.7,.2,1) .15s both; }
 .abertura-rule { display: block; height: 4px; width: clamp(90px, 12vw, 240px); border-radius: 3px;
   background: linear-gradient(90deg, #7cc47c, #2f9e8f 50%, #1c74b8); transform-origin: center; animation: introGrow .8s cubic-bezier(.2,.7,.2,1) .7s both; }
-.abertura-text { margin: 0; max-width: 42ch; font-size: clamp(16px, 2.05vw, 42px); line-height: 1.42; font-weight: 500; letter-spacing: -.005em;
-  text-align: justify; text-align-last: left; hyphens: none; color: #1d3326; animation: introUp .9s cubic-bezier(.2,.7,.2,1) 1s both; }
+.abertura-text { margin: 0; max-width: 44ch; font-size: clamp(16px, 2.05vw, 42px); line-height: 1.42; font-weight: 500; letter-spacing: -.005em;
+  text-align: justify; text-align-last: left; hyphens: none; text-indent: 2.5em; color: #1d3326; animation: introUp .9s cubic-bezier(.2,.7,.2,1) 1s both; }
 .abertura-partners { display: flex; align-items: center; gap: clamp(18px, 3vw, 44px); margin-top: clamp(6px, 2vh, 24px); animation: introUp .8s cubic-bezier(.2,.7,.2,1) 2s both; }
 .abertura-sema { height: clamp(40px, 6.4vw, 126px); width: auto; }
 .abertura-gov { height: clamp(44px, 7vw, 138px); width: auto; }
@@ -268,3 +268,7 @@ button, input, select { font: inherit; color: inherit; }
 .abertura-video .abertura { animation: none; }
 .abertura[hidden] { display: none; }
 @media (max-width: 600px) { .abertura-text { hyphens: auto; -webkit-hyphens: auto; } }
+/* sem piscada: fundo claro e página travada enquanto a abertura está na tela */
+html.com-abertura, html.com-abertura body { background: #f6faf7; }
+html.com-abertura body { overflow: hidden; }
+html.sem-abertura .abertura { display: none; }

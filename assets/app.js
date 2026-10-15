@@ -621,17 +621,18 @@
     matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => location.reload());
   }
 
-  // ------------------------------------------------------------------ abertura (7 s, uma vez por sessão)
+  // ------------------------------------------------------------------ abertura (10 s, uma vez por sessão)
   function abertura() {
     const el = document.getElementById('abertura');
+    const root = document.documentElement;
     if (!el) return;
+    if (root.classList.contains('sem-abertura')) { el.remove(); return; }
     const video = /[?&]intro=video\b/.test(location.search);
-    let visto = false;
-    try { visto = sessionStorage.getItem('asl.intro') === '1'; } catch { /* sem armazenamento */ }
-    if (visto && !video) return;
-    if (video) document.documentElement.classList.add('abertura-video');
-    el.hidden = false;
-    const fechar = () => { el.remove(); try { sessionStorage.setItem('asl.intro', '1'); } catch { /* ok */ } };
+    if (video) root.classList.add('abertura-video');
+    const fechar = () => {
+      el.remove(); root.classList.remove('com-abertura');
+      try { sessionStorage.setItem('asl.intro', '1'); } catch { /* sem armazenamento */ }
+    };
     el.addEventListener('animationend', (e) => { if (e.target === el && !video) fechar(); });
     document.getElementById('abertura-skip').addEventListener('click', () => { el.classList.add('out'); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.body.contains(el)) el.classList.add('out'); });
