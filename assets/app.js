@@ -473,8 +473,14 @@
       const parts = {}; I.filter((i) => i.municipio === m).forEach((i) => { const k = sitOf(i).key; parts[k] = (parts[k] || 0) + 1; });
       return { label: m, parts };
     }).sort((a, b) => Object.values(b.parts).reduce((x, y) => x + y, 0) - Object.values(a.parts).reduce((x, y) => x + y, 0));
-    Charts.hbar($('#ch-sit'), { rows: sitRows, series: SIT.map((s) => ({ key: s.key, label: s.label, color: css(s.v) })),
+    const gSit = Charts.hbar($('#ch-sit'), { rows: sitRows, series: SIT.map((s) => ({ key: s.key, label: s.label, color: css(s.v) })),
       aria: 'Situação dos imóveis por município', onClick: (r) => setFilter('mun', r.label, { toggle: true }) });
+    // nota técnica: mesma largura da maior barra (começa onde as barras começam)
+    const nota = document.querySelector('#ch-sit + .chart-note');
+    if (nota && gSit && gSit.W >= 520) {
+      nota.style.marginLeft = (gSit.labelW / gSit.W * 100) + '%';
+      nota.style.width = (gSit.plotW / gSit.W * 100) + '%';
+    } else if (nota) { nota.style.marginLeft = ''; nota.style.width = ''; }
 
     // área por fase × tipo
     const faseRows = FASES.map((f) => {

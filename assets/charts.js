@@ -116,6 +116,7 @@
       bindHover(container, hit, marks, `<div style="font-weight:700;margin-bottom:4px">${esc(r.label)}</div>${lines}${extra}`,
         opts.onClick ? () => opts.onClick(r) : null);
     });
+    return { W, labelW, plotW };   // geometria, para alinhar elementos ao gráfico
   }
 
   /* Colunas (série única ou empilhadas). opts como hbar. */

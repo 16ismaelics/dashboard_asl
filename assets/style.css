@@ -230,7 +230,7 @@ button, input, select { font: inherit; color: inherit; }
 
 .preview-note { background: var(--accent-soft); color: var(--ink); border-radius: 10px; padding: 10px 14px; font-size: 13px; }
 
-.chart-note { margin: 4px 0 0; padding: 9px 12px; border-radius: 9px; background: var(--surface-2); color: var(--ink-2); font-size: 12px; line-height: 1.5; max-width: 90ch; }
+.chart-note { margin: 4px 0 0; padding: 9px 12px; border-radius: 9px; background: var(--surface-2); color: var(--ink-2); font-size: 12px; line-height: 1.5; box-sizing: border-box; }
 .chart-note b { color: var(--ink); }
 
 /* mapa OSM no modo escuro: inverte só os blocos do mapa de fundo */
