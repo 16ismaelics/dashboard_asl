@@ -44,11 +44,15 @@
   const SIT = [
     { key: 'good', raw: 'BEM CONDUZIDO', label: 'Bem conduzido', v: '--s-good' },
     { key: 'warn', raw: 'EM RECUPERAÇÃO', label: 'Em recuperação', v: '--s-warn' },
-    { key: 'crit', raw: 'ABANDONADO', label: 'Abandonado', v: '--s-crit' },
+    // na planilha pode estar "ABANDONADO" (termo antigo) ou "SEM MANUTENÇÃO IDENTIFICADA"
+    { key: 'crit', raw: 'ABANDONADO', alt: 'SEM MANUTENCAO IDENTIFICADA', label: 'Sem manutenção identificada', v: '--s-crit' },
     { key: 'none', raw: null, label: 'Sem visita', v: '--s-none' },
   ];
   const SIT_NONE = SIT.find((s) => s.key === 'none');
-  const sitOf = (i) => SIT.find((s) => s.raw && s.raw === i.mon?.sit) || SIT_NONE;
+  const sitOf = (i) => {
+    const v = norm(i.mon?.sit).toUpperCase();
+    return SIT.find((s) => s.raw && (norm(s.raw).toUpperCase() === v || (s.alt && s.alt === v))) || SIT_NONE;
+  };
   const AV = ['RUIM', 'REGULAR', 'BOM', 'ÓTIMO'];
   const PROBLEMAS = [['fm', 'Falta de manejo'], ['mor', 'Mortalidade'], ['fi', 'Falta de insumos'], ['pc', 'Problemas climáticos'],
     ['sd', 'Solo degradado'], ['pd', 'Pragas e doenças']];
@@ -207,7 +211,7 @@
       { l: 'Área dos imóveis', v: n0.format(haImo), u: 'ha', s: `plantio ocupa ${haImo ? n1.format((haPlant / haImo) * 100) : 0}% da área` },
       { l: 'Imóveis visitados', v: n0.format(vis.length), s: `${pct(vis.length, I.length)}% dos imóveis filtrados`,
         x: bar([[vis.length, css('--accent')], [I.length - vis.length, css('--s-none')]]) },
-      { l: 'Bem conduzidos', v: pct(good, vis.length) + '%', s: `${warn} em recuperação · ${crit} abandonados`,
+      { l: 'Bem conduzidos', v: pct(good, vis.length) + '%', s: `${warn} em recuperação · ${crit} sem manutenção identificada`,
         x: bar([[good, css('--s-good')], [warn, css('--s-warn')], [crit, css('--s-crit')]]) },
       { l: 'Sobrevivência ≥ 50%', v: pct(sob50, vis.length) + '%', s: `${sob50} de ${vis.length} imóveis visitados` },
     ];
