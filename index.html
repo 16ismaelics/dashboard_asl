@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel ASL Acre</title>
+  <meta name="description" content="Monitoramento dos plantios PRA-SAF / PSAM-CI do Programa ASL Brasil no Acre: mapa interativo, indicadores e gráficos.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="top-inner">
+      <div class="logos" aria-label="Realização">
+        <img src="assets/logo-asl.png" alt="ASL Brasil — Paisagens Sustentáveis da Amazônia" class="logo logo-asl">
+        <img src="assets/logo-sema.png" alt="SEMA — Secretaria de Estado do Meio Ambiente" class="logo logo-sema">
+        <img src="assets/logo-gov-acre.png" alt="Governo do Acre" class="logo logo-gov">
+      </div>
+      <div class="sync">
+        <div class="sync-text">
+          <span class="sync-label">Última atualização</span>
+          <span id="upd" class="sync-time">—</span>
+        </div>
+        <button id="btn-refresh" class="btn btn-primary" type="button">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M20 11a8 8 0 0 0-14.9-4M4 4v4h4M4 13a8 8 0 0 0 14.9 4M20 20v-4h-4"/></svg>
+          <span>Atualizar agora</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="intro">
+      <p class="eyebrow">Programa ASL Brasil · Acre</p>
+      <h1>Monitoramento dos plantios PRA-SAF / PSAM-CI</h1>
+      <p class="lede">Imóveis com sistemas agroflorestais, enriquecimento e povoamento, áreas executadas e resultado das visitas de monitoramento.</p>
+    </section>
+
+    <section class="filters card" aria-label="Filtros">
+      <label class="f"><span>Município</span><select id="f-mun"></select></label>
+      <label class="f"><span>Fase</span><select id="f-fase"></select></label>
+      <label class="f"><span>Tipo de plantio</span><select id="f-tipo"></select></label>
+      <label class="f"><span>Situação</span><select id="f-sit"></select></label>
+      <label class="f"><span>Avaliação final</span><select id="f-av"></select></label>
+      <label class="f f-search"><span>Buscar</span><input id="f-q" type="search" placeholder="Imóvel, proprietário, ramal ou CAR (código ou número completo)"></label>
+      <div class="f-actions">
+        <span id="f-count" class="f-count"></span>
+        <button id="f-clear" class="btn btn-ghost" type="button">Limpar filtros</button>
+      </div>
+    </section>
+
+    <section id="kpis" class="kpis" aria-label="Indicadores"></section>
+
+    <section class="main-grid">
+      <div class="card map-card">
+        <div class="map-toolbar">
+          <div class="seg" role="group" aria-label="Colorir plantios por">
+            <span class="seg-label">Colorir plantios por</span>
+            <button type="button" data-color="tipo" class="on">Tipo</button>
+            <button type="button" data-color="sit">Situação</button>
+            <button type="button" data-color="fase">Fase</button>
+          </div>
+          <div class="seg" role="group" aria-label="Mapa base">
+            <button type="button" data-base="mapa" class="on">Mapa</button>
+            <button type="button" data-base="sat">Satélite</button>
+          </div>
+          <div class="layer-toggles">
+            <label><input type="checkbox" id="l-mun" checked> Municípios</label>
+            <label><input type="checkbox" id="l-imo" checked> Imóveis</label>
+            <label><input type="checkbox" id="l-plt" checked> Plantios</label>
+          </div>
+        </div>
+        <div id="map" role="application" aria-label="Mapa interativo dos imóveis e plantios"></div>
+        <div id="legend" class="legend"></div>
+      </div>
+
+      <aside id="detail" class="card detail" aria-live="polite"></aside>
+    </section>
+
+    <section class="charts">
+      <article class="card chart-card span-2">
+        <header><h2>Situação dos imóveis por município</h2><p>Número de imóveis segundo a última visita de monitoramento</p></header>
+        <div id="ch-sit" class="chart"></div>
+      </article>
+      <article class="card chart-card">
+        <header><h2>Área plantada por fase</h2><p>Hectares executados, por tipo de plantio</p></header>
+        <div id="ch-fase" class="chart"></div>
+      </article>
+      <article class="card chart-card">
+        <header><h2>Área plantada por município</h2><p>Hectares executados</p></header>
+        <div id="ch-mun" class="chart"></div>
+      </article>
+      <article class="card chart-card">
+        <header><h2>Problemas relatados</h2><p id="sub-prob">% dos imóveis visitados</p></header>
+        <div id="ch-prob" class="chart"></div>
+      </article>
+      <article class="card chart-card">
+        <header><h2>Práticas de manejo adotadas</h2><p id="sub-man">% dos imóveis visitados</p></header>
+        <div id="ch-man" class="chart"></div>
+      </article>
+      <article class="card chart-card">
+        <header><h2>Sobrevivência das mudas</h2><p>Imóveis visitados</p></header>
+        <div id="ch-sob" class="chart"></div>
+      </article>
+      <article class="card chart-card">
+        <header><h2>Avaliação final</h2><p>Imóveis visitados</p></header>
+        <div id="ch-av" class="chart"></div>
+      </article>
+      <article class="card chart-card">
+        <header><h2>Estágio do plantio</h2><p>Imóveis visitados</p></header>
+        <div id="ch-est" class="chart"></div>
+      </article>
+    </section>
+
+    <section class="card table-card">
+      <header class="table-head">
+        <div><h2>Imóveis</h2><p>Clique em uma linha para localizar no mapa</p></div>
+        <button id="btn-csv" class="btn btn-ghost" type="button">Baixar CSV</button>
+      </header>
+      <div class="table-scroll"><table id="tbl"></table></div>
+    </section>
+
+    <footer class="foot">
+      <p>Atualização automática semanal (segunda-feira, 17h, horário do Acre).</p>
+    </footer>
+  </main>
+
+  <div id="tip" class="tip" role="tooltip" hidden></div>
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <script src="assets/vendor/leaflet/leaflet.js"></script>
+  <script src="assets/charts.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

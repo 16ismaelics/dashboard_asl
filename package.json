@@ -1,0 +1,9 @@
+{
+  "name": "painel-asl-acre",
+  "private": true,
+  "type": "module",
+  "description": "Painel de monitoramento PRA-SAF / PSAM-CI — Programa ASL Brasil (Acre)",
+  "scripts": {
+    "build": "node scripts/build-data.mjs"
+  }
+}
