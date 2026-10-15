@@ -6,19 +6,22 @@
   <title>Painel ASL Acre</title>
   <meta name="description" content="Monitoramento dos plantios PRA-SAF / PSAM-CI do Programa ASL Brasil no Acre: mapa interativo, indicadores e gráficos.">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&display=swap">
   <link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
   <div id="abertura" class="abertura" role="dialog" aria-label="Apresentação do Programa ASL" hidden>
     <div class="abertura-stage">
-      <img class="abertura-asl" src="assets/logo-asl-hd.png" alt="ASL Brasil — Paisagens Sustentáveis da Amazônia">
+      <img class="abertura-asl" src="assets/logo-asl-hd.png" onerror="this.onerror=null;this.src='assets/logo-asl.png'" alt="ASL Brasil — Paisagens Sustentáveis da Amazônia">
       <span class="abertura-rule" aria-hidden="true"></span>
       <p class="abertura-text">Plantar é mais que recuperar a vegetação. É restaurar o equilíbrio ambiental, proteger a biodiversidade e cultivar um futuro sustentável. Com os Sistemas Agroflorestais, a produção e a conservação crescem juntas.</p>
       <div class="abertura-partners">
-        <img src="assets/logo-sema-hd.png" alt="SEMA — Secretaria de Estado do Meio Ambiente" class="abertura-sema">
+        <img src="assets/logo-sema-hd.png" onerror="this.onerror=null;this.src='assets/logo-sema.png'" alt="SEMA — Secretaria de Estado do Meio Ambiente" class="abertura-sema">
         <span class="abertura-sep" aria-hidden="true"></span>
-        <img src="assets/logo-gov-acre-hd.png" alt="Governo do Acre" class="abertura-gov">
+        <img src="assets/logo-gov-acre-hd.png" onerror="this.onerror=null;this.src='assets/logo-gov-acre.png'" alt="Governo do Acre" class="abertura-gov">
       </div>
     </div>
     <button type="button" class="abertura-skip" id="abertura-skip">Pular</button>
