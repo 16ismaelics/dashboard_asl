@@ -6,6 +6,18 @@
   <title>Painel ASL Acre</title>
   <meta name="description" content="Monitoramento dos plantios PRA-SAF / PSAM-CI do Programa ASL Brasil no Acre: mapa interativo, indicadores e gráficos.">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <script>
+    // decide antes do primeiro desenho da tela: abertura só uma vez por sessão
+    try {
+      if (sessionStorage.getItem('asl.intro') === '1' && !/[?&]intro=video\b/.test(location.search))
+        document.documentElement.classList.add('sem-abertura');
+      else {
+        document.documentElement.classList.add('com-abertura');
+        // segurança: libera a página mesmo se o script principal falhar
+        setTimeout(function () { document.documentElement.classList.remove('com-abertura'); }, 10600);
+      }
+    } catch (e) { document.documentElement.classList.add('com-abertura'); }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&display=swap">
@@ -13,7 +25,7 @@
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-  <div id="abertura" class="abertura" role="dialog" aria-label="Apresentação do Programa ASL" hidden>
+  <div id="abertura" class="abertura" role="dialog" aria-label="Apresentação do Programa ASL">
     <div class="abertura-stage">
       <img class="abertura-asl" src="assets/logo-asl-hd.png" onerror="this.onerror=null;this.src='assets/logo-asl.png'" alt="ASL Brasil — Paisagens Sustentáveis da Amazônia">
       <span class="abertura-rule" aria-hidden="true"></span>
