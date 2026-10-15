@@ -620,5 +620,22 @@
     let rt; new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(renderCharts, 120); }).observe($('.charts'));
     matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => location.reload());
   }
+
+  // ------------------------------------------------------------------ abertura (7 s, uma vez por sessão)
+  function abertura() {
+    const el = document.getElementById('abertura');
+    if (!el) return;
+    const video = /[?&]intro=video\b/.test(location.search);
+    let visto = false;
+    try { visto = sessionStorage.getItem('asl.intro') === '1'; } catch { /* sem armazenamento */ }
+    if (visto && !video) return;
+    if (video) document.documentElement.classList.add('abertura-video');
+    el.hidden = false;
+    const fechar = () => { el.remove(); try { sessionStorage.setItem('asl.intro', '1'); } catch { /* ok */ } };
+    el.addEventListener('animationend', (e) => { if (e.target === el && !video) fechar(); });
+    document.getElementById('abertura-skip').addEventListener('click', () => { el.classList.add('out'); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.body.contains(el)) el.classList.add('out'); });
+  }
+  abertura();
   start();
 })();
