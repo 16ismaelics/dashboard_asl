@@ -34,13 +34,13 @@
     <section class="intro">
       <p class="eyebrow">Programa ASL Brasil · Acre</p>
       <h1>Monitoramento dos plantios PRA-SAF / PSAM-CI</h1>
-      <p class="lede">Imóveis com sistemas agroflorestais, enriquecimento e povoamento, áreas executadas e resultado das visitas de monitoramento.</p>
+      <p class="lede">Imóveis com sistemas agroflorestais (SAF) e enriquecimento, áreas executadas e resultado das visitas de monitoramento.</p>
     </section>
 
     <section class="filters card" aria-label="Filtros">
       <label class="f"><span>Município</span><select id="f-mun"></select></label>
       <label class="f"><span>Fase</span><select id="f-fase"></select></label>
-      <label class="f"><span>Tipo de plantio</span><select id="f-tipo"></select></label>
+      <label class="f"><span>Sistema</span><select id="f-tipo"></select></label>
       <label class="f"><span>Situação</span><select id="f-sit"></select></label>
       <label class="f"><span>Avaliação final</span><select id="f-av"></select></label>
       <label class="f f-search"><span>Buscar</span><input id="f-q" type="search" placeholder="Imóvel, proprietário, ramal ou CAR (código ou número completo)"></label>
@@ -57,7 +57,7 @@
         <div class="map-toolbar">
           <div class="seg" role="group" aria-label="Colorir plantios por">
             <span class="seg-label">Colorir plantios por</span>
-            <button type="button" data-color="tipo" class="on">Tipo</button>
+            <button type="button" data-color="tipo" class="on">Sistema</button>
             <button type="button" data-color="sit">Situação</button>
             <button type="button" data-color="fase">Fase</button>
           </div>
@@ -82,9 +82,10 @@
       <article class="card chart-card span-2">
         <header><h2>Situação dos imóveis por município</h2><p>Número de imóveis segundo a última visita de monitoramento</p></header>
         <div id="ch-sit" class="chart"></div>
+        <p class="chart-note"><b>Nota técnica:</b> Nos imóveis ainda não submetidos à vistoria de campo, a avaliação foi realizada por meio de sensoriamento remoto, com análise de imagens de satélite, visando identificar indícios de limpeza da área, alterações na cobertura vegetal ou processos de regeneração. Os resultados dessa análise constituem subsídio técnico para o planejamento e a realização de futuras vistorias in loco, necessárias à confirmação das condições ambientais observadas.</p>
       </article>
       <article class="card chart-card">
-        <header><h2>Área plantada por fase</h2><p>Hectares executados, por tipo de plantio</p></header>
+        <header><h2>Área plantada por fase</h2><p>Hectares executados, por sistema</p></header>
         <div id="ch-fase" class="chart"></div>
       </article>
       <article class="card chart-card">

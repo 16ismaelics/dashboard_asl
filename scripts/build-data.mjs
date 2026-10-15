@@ -15,6 +15,10 @@ try {
     data = { atualizado_em: new Date().toISOString(), fonte: 'arquivo CSV local', linhas: rows.length, rows };
   } else {
     data = await fetchSheet();
+    if (!data.cadastro) {
+      console.warn(`[dados] AVISO: planilha de cadastro indisponível (${data.aviso_cadastro}). Mantendo a última versão.`);
+      try { data.cadastro = JSON.parse(await readFile(OUT, 'utf8')).cadastro || null; } catch { /* sem versão anterior */ }
+    } else console.log(`[dados] ${data.cadastro.length} imóveis lidos da planilha de cadastro`);
   }
   await writeFile(OUT, JSON.stringify(data));
   console.log(`[dados] ${data.linhas} linhas da planilha gravadas em data/monitoramento.json`);

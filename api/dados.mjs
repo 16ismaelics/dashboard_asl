@@ -15,7 +15,7 @@ export async function GET(request) {
       let mudou = true;
       try {
         const atual = await (await fetch(`${url.origin}/data/monitoramento.json`, { cache: 'no-store' })).json();
-        mudou = JSON.stringify(atual.rows) !== JSON.stringify(data.rows);
+        mudou = JSON.stringify([atual.rows, atual.cadastro]) !== JSON.stringify([data.rows, data.cadastro ?? atual.cadastro]);
       } catch { /* sem versão anterior: publica */ }
       if (mudou) publicado = (await fetch(hookUrl(), { method: 'POST' })).ok;
     }

@@ -103,7 +103,7 @@
         });
       } else {
         const w = (r.value / max) * plotW;
-        marks.push(el('path', { d: barPath(x, y, w, bh, 4, 'right'), fill: opts.color || css('--bar'), class: 'mark' }, svg));
+        marks.push(el('path', { d: barPath(x, y, w, bh, 4, 'right'), fill: r.color || opts.color || css('--bar'), class: 'mark' }, svg));
         x += w;
       }
       const v = el('text', { x: x + 6, y: y + bh / 2 + 4, 'font-size': 12, 'font-weight': 600, fill: css('--ink') }, svg);

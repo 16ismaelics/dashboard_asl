@@ -20,6 +20,8 @@
   --f1: #86b6ef; --f2: #5598e7; --f3: #256abf; --f4: #104281;
   /* status (situação) */
   --s-good: #0ca30c; --s-warn: #fab219; --s-crit: #d03b3b; --s-none: #a3a8a2;
+  --mun-top: #b07800; --mun-rest: #f1c75b;
+  --prob-lo: #f3c2bf; --prob-hi: #b3322f; --man-lo: #bfe0cb; --man-hi: #1f7a4d;
   --mun-fill: #0d7a43; --mun-line: #6f7a72; --imo-line: #14211a;
   --shadow: 0 1px 2px rgba(20,33,26,.06), 0 4px 16px rgba(20,33,26,.05);
   --radius: 14px;
@@ -34,7 +36,7 @@
     --accent: #3fae74; --accent-ink: #08130d; --accent-soft: #1d3426; --bar: #3fae74;
     --t-saf: #3987e5; --t-enr: #d95926; --t-pov: #199e70;
     --f1: #184f95; --f2: #256abf; --f3: #5598e7; --f4: #9ec5f4;
-    --s-none: #5d635e; --mun-fill: #3fae74; --mun-line: #8b938c; --imo-line: #eef1ec;
+    --s-none: #5d635e; --mun-top: #fab219; --mun-rest: #8a6d22; --prob-lo: #5a2b29; --prob-hi: #e66767; --man-lo: #244a35; --man-hi: #3fae74; --mun-top: #fab219; --mun-rest: #8a6d22; --prob-lo: #5a2b29; --prob-hi: #e66767; --man-lo: #244a35; --man-hi: #3fae74; --mun-fill: #3fae74; --mun-line: #8b938c; --imo-line: #eef1ec;
     --shadow: none;
   }
 }
@@ -46,7 +48,7 @@
   --accent: #3fae74; --accent-ink: #08130d; --accent-soft: #1d3426; --bar: #3fae74;
   --t-saf: #3987e5; --t-enr: #d95926; --t-pov: #199e70;
   --f1: #184f95; --f2: #256abf; --f3: #5598e7; --f4: #9ec5f4;
-  --s-none: #5d635e; --mun-fill: #3fae74; --mun-line: #8b938c; --imo-line: #eef1ec;
+  --s-none: #5d635e; --mun-top: #fab219; --mun-rest: #8a6d22; --prob-lo: #5a2b29; --prob-hi: #e66767; --man-lo: #244a35; --man-hi: #3fae74; --mun-fill: #3fae74; --mun-line: #8b938c; --imo-line: #eef1ec;
   --shadow: none;
 }
 
@@ -227,3 +229,9 @@ button, input, select { font: inherit; color: inherit; }
 }
 
 .preview-note { background: var(--accent-soft); color: var(--ink); border-radius: 10px; padding: 10px 14px; font-size: 13px; }
+
+.chart-note { margin: 4px 0 0; padding: 9px 12px; border-radius: 9px; background: var(--surface-2); color: var(--ink-2); font-size: 12px; line-height: 1.5; max-width: 90ch; }
+.chart-note b { color: var(--ink); }
+
+/* mapa OSM no modo escuro: inverte só os blocos do mapa de fundo */
+.leaflet-tile.tiles-dark, .tiles-dark .leaflet-tile { filter: invert(1) hue-rotate(180deg) brightness(.85) contrast(.9) saturate(.6); }

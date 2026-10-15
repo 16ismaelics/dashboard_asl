@@ -54,6 +54,16 @@ dá para trocar.
   todos os visitantes vejam a versão nova em ~1 minuto. Cliques sem mudança na planilha não
   geram deploy.
 
+### Planilha complementar (cadastro dos imóveis)
+O painel também lê a planilha de cadastro (`1nrAwc0Kss9exozA3oZuG9TGIvdfrGAzD`, aba `gid=660062963`)
+**só para preencher o sistema e o modelo** dos imóveis que estão com a coluna SISTEMA vazia (ou sem
+linha) na planilha de monitoramento — a de monitoramento sempre tem prioridade. Na ficha do imóvel, o
+sistema vindo dessa planilha aparece marcado como “(planilha de cadastro)”.
+- Usa apenas as colunas **Cód_CAR** e **Modelo SAF**; nomes, CPF e telefones são descartados na leitura.
+- “Povoamento” é tratado como **Enriquecimento** (nome atual).
+- Se essa planilha ficar inacessível, o painel continua funcionando com a última versão lida.
+- Para trocar de planilha/aba: variáveis `CADASTRO_ID` e `CADASTRO_GID` na Vercel.
+
 ### Regras para a planilha continuar funcionando
 - Compartilhamento: **“Qualquer pessoa com o link” → Leitor**.
 - A aba lida é a do link (`gid=714297731`). Para trocar de planilha ou aba, crie as variáveis

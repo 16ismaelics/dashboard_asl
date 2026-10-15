@@ -26,15 +26,29 @@
   // ------------------------------------------------------------------ vocabulário
   const FASES = ['Fase I · 2022/23', 'Fase II · 2023/24', 'Fase III · 2024/25', 'Fase IV · 2025/26'];
   const FASE_VAR = { 'Fase I · 2022/23': '--f1', 'Fase II · 2023/24': '--f2', 'Fase III · 2024/25': '--f3', 'Fase IV · 2025/26': '--f4' };
-  const TIPOS = ['SAF', 'Enriquecimento', 'Povoamento'];
-  const TIPO_VAR = { SAF: '--t-saf', Enriquecimento: '--t-enr', Povoamento: '--t-pov' };
+  // Sistema de cada imóvel: vem SÓ da coluna SISTEMA da planilha
+  const SIS_BASE = ['SAF', 'SAF + Enriquecimento', 'Enriquecimento'];
+  const SEM_SIS = 'Sem informação';
+  let TIPOS = [...SIS_BASE, SEM_SIS];
+  const TIPO_VAR = { 'SAF': '--t-saf', 'SAF + Enriquecimento': '--t-pov', 'Enriquecimento': '--t-enr', [SEM_SIS]: '--s-none' };
+  const tipoVar = (t) => TIPO_VAR[t] || '--s-none';
+  function sistemaDe(sis) {
+    const t = norm(sis).replace(/\s+/g, ' ').trim();
+    if (!t) return SEM_SIS;
+    const saf = /\bsaf\b/.test(t), enr = t.includes('enriq') || t.includes('povoam'); // povoamento = nome antigo
+    if (saf && enr) return 'SAF + Enriquecimento';
+    if (saf) return 'SAF';
+    if (enr) return 'Enriquecimento';
+    return title(sis);
+  }
   const SIT = [
     { key: 'good', raw: 'BEM CONDUZIDO', label: 'Bem conduzido', v: '--s-good' },
     { key: 'warn', raw: 'EM RECUPERAÇÃO', label: 'Em recuperação', v: '--s-warn' },
     { key: 'crit', raw: 'ABANDONADO', label: 'Abandonado', v: '--s-crit' },
     { key: 'none', raw: null, label: 'Sem visita', v: '--s-none' },
   ];
-  const sitOf = (i) => SIT.find((s) => s.raw && s.raw === i.mon?.sit) || SIT[3];
+  const SIT_NONE = SIT.find((s) => s.key === 'none');
+  const sitOf = (i) => SIT.find((s) => s.raw && s.raw === i.mon?.sit) || SIT_NONE;
   const AV = ['RUIM', 'REGULAR', 'BOM', 'ÓTIMO'];
   const PROBLEMAS = [['fm', 'Falta de manejo'], ['mor', 'Mortalidade'], ['fi', 'Falta de insumos'], ['pc', 'Problemas climáticos'],
     ['sd', 'Solo degradado'], ['pd', 'Pragas e doenças']];
@@ -78,18 +92,15 @@
       const i = D.byCar.get(p.car);
       if (i) { i.plantios.push(p); i.haPlant += p.ha || 0; }
     }
-    for (const i of D.imoveis) {
-      const by = {};
-      i.plantios.forEach((p) => { by[p.tipo] = (by[p.tipo] || 0) + (p.ha || 0); });
-      i.tipoPrincipal = Object.entries(by).sort((a, b) => b[1] - a[1])[0]?.[0] || 'SAF';
-      i.tipos = TIPOS.filter((t) => by[t]);
-      i.faseRecente = [...i.fases].sort().slice(-1)[0];
-    }
+    for (const i of D.imoveis) i.faseRecente = [...i.fases].sort().slice(-1)[0];
     applyMonitoring(mon);
   }
 
   function applyMonitoring(mon) {
     D.monMeta = { atualizado_em: mon.atualizado_em, fonte: mon.fonte, linhas: mon.rows?.length || 0 };
+    // planilha complementar (cadastro): se não veio nesta leitura, mantém a anterior
+    if (Array.isArray(mon.cadastro)) D.cadastro = new Map(mon.cadastro.map((c) => [c.car, c]));
+    else if (!D.cadastro) D.cadastro = new Map();
     D.semPoligono = [];
     D.imoveis.forEach((i) => { i.mon = null; });
     for (const r of mon.rows || []) {
@@ -98,6 +109,17 @@
       // se houver mais de uma linha para o mesmo CAR, vale a visita mais recente
       if (!i.mon || (r.data || '') > (i.mon.data || '')) i.mon = r;
     }
+    for (const i of D.imoveis) {
+      i.sistema = sistemaDe(i.mon?.sis);
+      i.sisFonte = i.sistema !== SEM_SIS ? 'monitoramento' : null;
+      const cad = D.cadastro.get(i.car);
+      if (i.sistema === SEM_SIS && cad?.sis) { i.sistema = sistemaDe(cad.sis); i.sisFonte = 'cadastro'; }
+      i.modelo = i.mon?.mod || cad?.mod || null;
+      i.tipoPrincipal = i.sistema; i.tipos = [i.sistema];
+      i.plantios.forEach((p) => { p.tipo = i.sistema; });
+    }
+    const extras = [...new Set(D.imoveis.map((i) => i.sistema))].filter((t) => !SIS_BASE.includes(t) && t !== SEM_SIS);
+    TIPOS = [...SIS_BASE, ...extras, ...(D.imoveis.some((i) => i.sistema === SEM_SIS) ? [SEM_SIS] : [])];
     $('#upd').textContent = fmtStamp(D.monMeta.atualizado_em);
     $('#upd').title = `${D.monMeta.linhas} linhas · ${D.monMeta.fonte || ''}`;
   }
@@ -200,8 +222,10 @@
   function initMap() {
     map = L.map('map', { zoomControl: true, preferCanvas: false, attributionControl: true }).setView([-10.1, -68.5], 7);
     const dark = matchMedia('(prefers-color-scheme: dark)').matches;
-    baseLayers.mapa = L.tileLayer(`https://{s}.basemaps.cartocdn.com/${dark ? 'dark_all' : 'light_all'}/{z}/{x}/{y}{r}.png`, {
-      maxZoom: 19, subdomains: 'abcd', attribution: '&copy; OpenStreetMap &copy; CARTO' });
+    // OpenStreetMap: não exige chave de acesso (a CARTO passou a exigir)
+    baseLayers.mapa = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19, className: dark ? 'tiles-dark' : 'tiles-light',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' });
     baseLayers.sat = L.layerGroup([
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 19, attribution: 'Imagens &copy; Esri, Maxar, Earthstar Geographics' }),
@@ -239,12 +263,12 @@
   function plantioColor(p) {
     if (S.colorBy === 'fase') return css(FASE_VAR[p.fase]);
     if (S.colorBy === 'sit') return css(sitOf(D.byCar.get(p.car)).v);
-    return css(TIPO_VAR[p.tipo]);
+    return css(tipoVar(p.tipo));
   }
   function imovelColor(i) {
     if (S.colorBy === 'fase') return css(FASE_VAR[i.faseRecente]);
     if (S.colorBy === 'sit') return css(sitOf(i).v);
-    return css(TIPO_VAR[i.tipoPrincipal]);
+    return css(tipoVar(i.tipoPrincipal));
   }
 
   function munStats() {
@@ -312,7 +336,7 @@
       },
       onEachFeature: (f, layer) => {
         const p = f.properties, i = D.byCar.get(p.car);
-        layer.bindTooltip(`<b>${esc(p.modelo || p.tipo)}</b> · ${n2.format(p.ha)} ha<br>${esc(title(i?.propriedade))} · ${esc(p.fase)}`,
+        layer.bindTooltip(`<b>${esc(p.tipo)}</b> · ${n2.format(p.ha)} ha<br>${esc(title(i?.propriedade))} · ${esc(p.fase)}`,
           { sticky: true, className: 'hover-tip' });
         layer.on('click', (e) => { select(p.car, p.uid); L.DomEvent.stopPropagation(e); });
       },
@@ -351,7 +375,7 @@
     let items;
     if (S.colorBy === 'fase') items = FASES.map((f) => [css(FASE_VAR[f]), f]);
     else if (S.colorBy === 'sit') items = SIT.map((s) => [css(s.v), s.label]);
-    else items = TIPOS.map((t) => [css(TIPO_VAR[t]), t]);
+    else items = TIPOS.map((t) => [css(tipoVar(t)), t]);
     $('#legend').innerHTML = items.map(([c, l]) => `<span class="it"><span class="sw" style="background:${c}"></span>${esc(l)}</span>`).join('')
       + `<span class="it"><span class="sw sw-line" style="border-color:${css('--imo-line')}"></span>Limite do imóvel</span>`
       + `<span class="it" style="margin-left:auto;color:var(--muted)">Pontos = imóveis (zoom afastado) · polígonos aparecem ao aproximar</span>`;
@@ -375,7 +399,7 @@
     const dl = (pairs) => `<dl class="d-grid">${pairs.filter((p) => p[1] !== undefined).map(([k, v]) => `<div><dt>${k}</dt><dd>${v ?? '—'}</dd></div>`).join('')}</dl>`;
     const plts = i.plantios.map((p) => `<div class="plt ${p.uid === S.selPlt ? 'sel' : ''}" data-plt="${p.uid}">
         <span class="sw" style="background:${plantioColor(p)}"></span>
-        <span>${esc(p.modelo || p.tipo)}<small>${esc(p.fase)}</small></span><b>${n2.format(p.ha)} ha</b></div>`).join('');
+        <span>${esc(p.fase)}<small>${esc(p.tipo)}${i.modelo ? ' · modelo ' + esc(i.modelo) : ''}</small></span><b>${n2.format(p.ha)} ha</b></div>`).join('');
     let mon = '<p class="empty">Imóvel ainda sem visita de monitoramento de acordo com a última atualização.</p>';
     if (m && m.visitado) {
       const chips = (list, bad) => list.map(([k, l]) => `<span class="chip ${m[k] ? (bad ? 'bad' : 'yes') : ''}">${m[k] ? (bad ? '●' : '✓') : '–'} ${l}</span>`).join('');
@@ -390,17 +414,17 @@
         ${m.pp || m.dst ? `<div class="note"><b>Produtos:</b> ${esc(title(m.pp) || '—')}${m.dst ? ` · <b>Destino:</b> ${esc(title(m.dst))}` : ''}</div>` : ''}
         <div class="d-sec"><h3>Práticas de manejo</h3><div class="chips">${chips(MANEJO, false)}</div></div>
         <div class="d-sec"><h3>Problemas observados</h3><div class="chips">${chips(PROBLEMAS, true)}</div></div>
-        ${m.op ? `<div class="note"><b>Outros problemas:</b> ${esc(m.op)}</div>` : ''}
-        ${m.rec ? `<div class="note"><b>Recomendações:</b> ${esc(m.rec)}</div>` : ''}
-        ${m.obs ? `<div class="note"><b>Observações:</b> ${esc(m.obs)}</div>` : ''}`;
+`;
     }
     box.innerHTML = `
       <div class="d-head"><div><h2>${esc(title(i.propriedade))}</h2>
         <div class="d-sub">${esc(i.municipio)} · ${esc(i.nucleo || '')}</div></div>
         <button class="d-close" type="button" aria-label="Fechar detalhe">✕</button></div>
-      ${dl([['Proprietário(a)', esc(title(i.proprietario))], ['Código CAR', i.mon?.car_completo ? `<span style="word-break:break-all;font-size:12px">${esc(i.mon.car_completo)}</span>` : esc(i.car)], ['Local', esc(i.local)],
+      ${dl([['Proprietário(a)', esc(title(i.proprietario))], ['Código CAR', carCompleto(i) ? `<span style="word-break:break-all;font-size:12px">${esc(carCompleto(i))}</span>` : esc(i.car)], ['Local', esc(i.local)],
         ['Fase(s)', i.fases.map((f) => f.split(' · ')[0]).join(', ')], ['Área do imóvel', `${n2.format(i.ha)} ha`],
-        ['Área plantada', `${n2.format(i.haPlant)} ha`]])}
+        ['Área plantada', `${n2.format(i.haPlant)} ha`],
+        ['Sistema', i.sistema === SEM_SIS ? '—' : esc(i.sistema) + (i.sisFonte === 'cadastro' ? ' <span style="font-weight:400;color:var(--muted);font-size:11px">(planilha de cadastro)</span>' : '')],
+        ['Modelo', i.modelo ? esc(i.modelo) : '—']])}
       <div class="d-sec"><h3>Áreas de plantio (${i.plantios.length})</h3><div class="plt-list">${plts}</div></div>
       <div class="d-sec"><h3>Monitoramento</h3>${mon}</div>`;
     box.querySelector('.d-close').onclick = () => { S.sel = null; S.selPlt = null; renderDetail(); renderMap(true); highlightRow(); };
@@ -419,6 +443,21 @@
       ${D.semPoligono.length ? `<div class="note">${D.semPoligono.length} linha(s) da planilha sem imóvel correspondente nos shapes (códigos CAR: ${D.semPoligono.map((r) => esc(r.car)).join(', ')}).</div>` : ''}`;
     $('#detail').querySelectorAll('[data-mun]').forEach((tr) => tr.onclick = () => setFilter('mun', tr.dataset.mun, { toggle: true }));
   }
+
+
+  // tom de uma mesma cor proporcional ao valor (monocromático)
+  function hexRgb(h) { h = h.replace('#', ''); return [0, 2, 4].map((k) => parseInt(h.slice(k, k + 2), 16)); }
+  function mix(a, b, t) {
+    const A = hexRgb(a), B = hexRgb(b);
+    return '#' + A.map((v, k) => Math.round(v + (B[k] - v) * t).toString(16).padStart(2, '0')).join('');
+  }
+  function rampa(rows, lo, hi) {
+    const max = Math.max(...rows.map((r) => r.value), 1e-9), a = css(lo), b = css(hi);
+    rows.forEach((r) => { r.color = mix(a, b, r.value / max); });
+    return rows;
+  }
+  // número completo do CAR: planilha de monitoramento > planilha de cadastro
+  const carCompleto = (i) => i.mon?.car_completo || D.cadastro?.get(i.car)?.car_completo || '';
 
   // ------------------------------------------------------------------ gráficos
   function renderCharts() {
@@ -439,7 +478,7 @@
       const [a, b] = f.split(' · ');
       return { label: a, sub: b, title: f, key: f, parts };
     });
-    Charts.cols($('#ch-fase'), { rows: faseRows, series: TIPOS.map((t) => ({ key: t, label: t, color: css(TIPO_VAR[t]) })),
+    Charts.cols($('#ch-fase'), { rows: faseRows, series: TIPOS.map((t) => ({ key: t, label: t, color: css(tipoVar(t)) })),
       decimals: 1, aria: 'Área plantada por fase', height: 210,
       tipExtra: (r) => `<div style="color:var(--muted);margin-top:4px">hectares · clique para filtrar</div>`,
       onClick: (r) => setFilter('fase', r.key, { toggle: true }) });
@@ -447,6 +486,7 @@
     // área por município
     const munRows = muns.map((m) => ({ label: m, value: P.filter((p) => p.municipio === m).reduce((s, p) => s + (p.ha || 0), 0) }))
       .sort((a, b) => b.value - a.value);
+    munRows.forEach((r, j) => { r.color = css(j === 0 ? '--mun-top' : '--mun-rest'); });  // 1º lugar mais escuro
     Charts.hbar($('#ch-mun'), { rows: munRows, decimals: 1, unit: ' ha', valueLabel: 'Área plantada',
       onClick: (r) => setFilter('mun', r.label, { toggle: true }) });
 
@@ -456,15 +496,18 @@
       return { label: l, value: vis.length ? (n / vis.length) * 100 : 0, n };
     }).sort((a, b) => b.value - a.value);
     const tipN = (r) => `<div style="color:var(--muted);margin-top:4px">${r.n} de ${vis.length} imóveis visitados</div>`;
-    Charts.hbar($('#ch-prob'), { rows: pctRows(PROBLEMAS), max: 100, unit: '%', valueLabel: 'Imóveis', tipExtra: tipN, color: css('--s-crit') });
-    Charts.hbar($('#ch-man'), { rows: pctRows(MANEJO), max: 100, unit: '%', valueLabel: 'Imóveis', tipExtra: tipN });
+    Charts.hbar($('#ch-prob'), { rows: rampa(pctRows(PROBLEMAS), '--prob-lo', '--prob-hi'), max: 100, unit: '%', valueLabel: 'Imóveis', tipExtra: tipN });
+    Charts.hbar($('#ch-man'), { rows: rampa(pctRows(MANEJO), '--man-lo', '--man-hi'), max: 100, unit: '%', valueLabel: 'Imóveis', tipExtra: tipN });
 
     // distribuições
-    const dist = (list, k) => list.map(([v, l]) => ({ label: l, key: v, value: vis.filter((i) => i.mon[k] === v).length }));
-    Charts.cols($('#ch-sob'), { rows: dist(SOB, 'sob'), valueLabel: 'Imóveis' });
-    Charts.cols($('#ch-av'), { rows: dist(AV.map((a) => [a, title(a)]), 'av'), valueLabel: 'Imóveis',
+    const dist = (list, k, cores) => list.map(([v, l], j) => ({ label: l, key: v, value: vis.filter((i) => i.mon[k] === v).length,
+      color: cores ? css(cores[j]) : undefined }));
+    const RUIM_BOM = ['--s-crit', '--s-warn', '--s-good'];            // vermelho → amarelo → verde
+    const AV_CORES = ['--s-crit', '--s-none', '--s-warn', '--s-good']; // Ruim, Regular, Bom, Ótimo
+    Charts.cols($('#ch-sob'), { rows: dist(SOB, 'sob', RUIM_BOM), valueLabel: 'Imóveis' });
+    Charts.cols($('#ch-av'), { rows: dist(AV.map((a) => [a, title(a)]), 'av', AV_CORES), valueLabel: 'Imóveis',
       onClick: (r) => setFilter('av', r.key, { toggle: true }) });
-    Charts.cols($('#ch-est'), { rows: dist(EST, 'est'), valueLabel: 'Imóveis' });
+    Charts.cols($('#ch-est'), { rows: dist(EST, 'est', RUIM_BOM), valueLabel: 'Imóveis' });
   }
 
   // ------------------------------------------------------------------ tabela
@@ -479,9 +522,8 @@
     { k: 'propriedade', l: 'Imóvel', v: (i) => title(i.propriedade) },
     { k: 'dono', l: 'Proprietário(a)', v: (i) => nomeCurto(i.proprietario) },
     { k: 'municipio', l: 'Município', v: (i) => i.municipio },
-    { k: 'nucleo', l: 'Núcleo', v: (i) => i.nucleo || '' },
     { k: 'fases', l: 'Fase(s)', v: (i) => i.fases.map((f) => f.split(' · ')[0].replace('Fase ', '')).join(', ') },
-    { k: 'tipos', l: 'Tipo', v: (i) => i.tipos.join(' + ') },
+    { k: 'sistema', l: 'Sistema', v: (i) => i.sistema === SEM_SIS ? '' : i.sistema },
     { k: 'ha', l: 'Área imóvel (ha)', n: true, v: (i) => i.ha, f: (x) => n1.format(x) },
     { k: 'haPlant', l: 'Área plantada (ha)', n: true, v: (i) => i.haPlant, f: (x) => n2.format(x) },
     { k: 'nplt', l: 'Plantios', n: true, v: (i) => i.plantios.length },
@@ -513,16 +555,16 @@
   function highlightRow() { document.querySelectorAll('#tbl tbody tr').forEach((tr) => tr.classList.toggle('sel', tr.dataset.car === S.sel)); }
 
   function exportCSV() {
-    const head = ['CAR', 'Imóvel', 'Proprietário', 'Município', 'Núcleo', 'Local', 'Fases', 'Tipos', 'Área imóvel (ha)', 'Área plantada (ha)', 'Plantios',
+    const head = ['CAR', 'CAR completo', 'Imóvel', 'Proprietário', 'Município', 'Núcleo', 'Local', 'Fases', 'Sistema', 'Área imóvel (ha)', 'Área plantada (ha)', 'Plantios',
       'Situação', 'Avaliação', 'Sobrevivência', 'Desenvolvimento', 'Estágio', 'Data visita', 'Ano implantação',
-      ...MANEJO.map((m) => m[1]), ...PROBLEMAS.map((p) => p[1]), 'Outros problemas', 'Produção', 'Produtos', 'Destino', 'Recomendações', 'Observações'];
+      ...MANEJO.map((m) => m[1]), ...PROBLEMAS.map((p) => p[1]), 'Produção', 'Produtos', 'Destino'];
     const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
     const dec = (x) => (x ?? '') === '' ? '' : String(Math.round(x * 10000) / 10000).replace('.', ',');
     const sn = (v) => v === true ? 'Sim' : v === false ? 'Não' : '';
     const lines = V.imoveis.map((i) => { const m = i.mon || {};
-      return [i.car, title(i.propriedade), i.proprietario, i.municipio, i.nucleo, i.local, i.fases.join(' | '), i.tipos.join(' + '),
+      return [i.car, carCompleto(i), title(i.propriedade), i.proprietario, i.municipio, i.nucleo, i.local, i.fases.join(' | '), i.sistema === SEM_SIS ? '' : i.sistema,
         dec(i.ha), dec(i.haPlant), i.plantios.length, sitOf(i).label, m.av, m.sob, m.des, m.est, fmtDate(m.data).replace('—', ''), m.ano,
-        ...MANEJO.map(([k]) => sn(m[k])), ...PROBLEMAS.map(([k]) => sn(m[k])), m.op, sn(m.prod), m.pp, m.dst, m.rec, m.obs].map(q).join(';'); });
+        ...MANEJO.map(([k]) => sn(m[k])), ...PROBLEMAS.map(([k]) => sn(m[k])), sn(m.prod), m.pp, m.dst].map(q).join(';'); });
     const blob = new Blob(['﻿' + [head.map(q).join(';'), ...lines].join('\r\n')], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
     a.download = `ASL_imoveis_${new Date().toISOString().slice(0, 10)}.csv`; a.click();
